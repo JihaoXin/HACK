@@ -24,7 +24,7 @@ cd hack
 
 ### Initialize Transformers Submodule
 ```bash
-cd transformers
+cd submodules/transformers
 git submodule update --init --recursive
 git checkout hack
 pip install -e .
