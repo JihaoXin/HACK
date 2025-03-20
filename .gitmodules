@@ -1,3 +1,3 @@
-[submodule "transformers"]
-	path = transformers
+[submodule "submodules/transformers"]
+	path = submodules/transformers
 	url = git@github.com:JihaoXin/transformers.git
