@@ -31,6 +31,29 @@ pip install -e .
 cd ..
 ```
 
+### Compile MatMul CUTLASS 
+```bash
+# Install CUTLASS
+git clone https://github.com/NVIDIA/cutlass.git
+cd cutlass
+mkdir build && cd build
+cmake .. -DCUTLASS_NVCC_ARCHS=80 # Change to your GPU architecture
+make -j8
+
+# Navigate to your project directory
+cd /data/fat/hcp/jihao
+
+# Compile the file (adjust the CUTLASS path as needed)
+nvcc -o cutlass_build/matmul_cutlass matmul_cutlass.cu -I/data/fat/hcp/jihao/submodules/cutlass/include -I/data/fat/hcp/jihao/submodules/cutlass/tools/util/include -std=c++17 -lcuda -arch=sm_80
+
+# Run the executable with different options
+./matmul_cutlass simple          # Run simple GEMM test
+./matmul_cutlass exp1            # Run experiment 1 (two consecutive matmuls)
+./matmul_cutlass exp2 300        # Run experiment 2 with middle_dim=300
+./matmul_cutlass all             # Run all tests
+./matmul_cutlass help            # Display help information
+```
+
 ### Download Model
 
 Create a models directory and download Llama-3.1-8B from Hugging Face:
@@ -135,4 +158,76 @@ This approach enables:
 - Better memory locality for hardware acceleration
 - Parallel processing of independent tiles
 - Adjustable compression rates for different accuracy targets
+
+# Matrix Multiplication Experiments with CUTLASS
+
+This project implements matrix multiplication experiments using NVIDIA's CUTLASS library. It replicates the functionality of the PyTorch implementation in `matmul_ncu.py` but uses CUTLASS for potentially better performance analysis.
+
+## Experiments
+
+1. **Experiment 1**: Two consecutive matrix multiplications: [100,4000] @ [4000,4000] @ [4000,100]
+2. **Experiment 2**: Three matrix multiplications: ([100,4000] @ [4000,M]) @ ([M,4000] @ [4000,100]), where M is configurable (default is 512)
+
+## Requirements
+
+- CUDA Toolkit 11.0 or newer
+- CUTLASS library (https://github.com/NVIDIA/cutlass)
+- CMake 3.17 or newer
+- A CUDA-capable GPU with compute capability 8.0 or higher
+
+## Building the Project
+
+1. Clone the CUTLASS repository and build it:
+   ```bash
+   git clone https://github.com/NVIDIA/cutlass.git
+   cd cutlass
+   mkdir build && cd build
+   cmake .. -DCUTLASS_NVCC_ARCHS=80 # Change to your GPU architecture
+   make -j
+   ```
+
+2. Update the CUTLASS_DIR path in CMakeLists.txt to point to your CUTLASS installation.
+
+3. Build the project:
+   ```bash
+   mkdir build && cd build
+   cmake ..
+   make
+   ```
+
+## Running the Experiments
+
+Run the binary directly:
+```bash
+./matmul_cutlass
+```
+
+## Profiling with NVIDIA Nsight Compute (NCU)
+
+To profile the experiments with NCU, use these commands:
+
+For experiment 1:
+```bash
+ncu --metrics sm__cycles_active.avg.pct_of_peak_sustained_elapsed,sm__cycles_elapsed.avg.pct_of_peak_sustained_elapsed ./matmul_cutlass 1
+```
+
+For experiment 2:
+```bash
+ncu --metrics sm__cycles_active.avg.pct_of_peak_sustained_elapsed,sm__cycles_elapsed.avg.pct_of_peak_sustained_elapsed ./matmul_cutlass 2
+```
+
+## Customizing Experiments
+
+You can modify the matrix dimensions and other parameters directly in the source code:
+
+- In `matmul_cutlass.cu`, look for the `experiment1()` and `experiment2()` functions
+- The `middle_dim` parameter in experiment2 can be changed to evaluate different matrix sizes
+
+## Performance Comparison with PyTorch
+
+This implementation allows for direct comparison with the PyTorch implementation in terms of performance metrics. The main differences are:
+
+1. Direct control over kernel selection and parameters
+2. More detailed profiling capabilities
+3. Better understanding of the underlying GPU operations
 
