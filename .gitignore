@@ -5,3 +5,6 @@
 HF
 HF-Llama-3.1-8B
 __pycache__/**
+log/**
+data_old/**
+
