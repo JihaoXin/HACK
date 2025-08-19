@@ -4,3 +4,6 @@
 [submodule "submodules/cutlass"]
 	path = submodules/cutlass
 	url = https://github.com/NVIDIA/cutlass.git
+[submodule "palu"]
+	path = palu
+	url = https://github.com/JihaoXin/Palu.git
